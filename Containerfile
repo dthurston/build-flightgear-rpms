@@ -35,6 +35,7 @@ RUN    --mount=type=secret,id=sca \
            echo "Using the host's RHEL subscription"; \
        else \
            . /run/secrets/sca \
+           && dnf -y install subscription-manager \
            && subscription-manager register \
                   --username "$SCA_USER" --password "$SCA_PASS"; \
        fi

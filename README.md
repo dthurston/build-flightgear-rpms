@@ -1,33 +1,45 @@
 # Build FlightGear flight simulator for RHEL 9
 Use a Containerfile with multi-stage builds to sort out all the missing
-dependencies and build the RPMs.
+dependencies and build the RPMs for RHEL 9.8.
 
-Install RHEL 9.8 minimal. Clone this repository to your physical
-or virtual guest instance of RHEL 9.8. Edit `demo.conf` to set SCA
-credentials. Next, register with SCA and pull updates
+Everything runs inside containers, so you can build on any Linux host
+with podman (4.0 or later) or docker (with BuildKit, the default since
+Docker 23). The RHEL build stage registers itself with your Red Hat
+account, so the host doesn't need to run RHEL or be subscribed.
 
-    cd ~/build-flightgear-rpms
-    sudo ./register-and-update.sh
-    sudo reboot
+## Install a container engine
+On Fedora, RHEL, or CentOS Stream
 
-Install podman
-
-    cd ~/build-flightgear-rpms
     sudo dnf -y install podman
 
-Prepare to build the RPMs. Login to the registry using your Red Hat
-customer portal credentials.
+On Ubuntu or Debian
 
-    mkdir -p flightgear-rpms
-    podman login registry.redhat.io
+    sudo apt-get update
+    sudo apt-get -y install podman
 
-Build the FlightGear RPMs
+Docker works too if you already have it.
 
-    podman build -f Containerfile -t built-fg-rpms -v $(pwd)/flightgear-rpms:/rpms:Z
+## Set your Red Hat credentials
+Clone this repository and edit `demo.conf` to set your Red Hat customer
+portal username and password. These are passed to the build as a secret
+and are not stored in any image layer. A free
+[Red Hat Developer](https://developers.redhat.com/register) account
+works.
 
-The RPMs will be in the flightgear-rpms directory when the container
-build finishes. You can discard the `-devel` RPMs as you will no longer
-need those.
+If you build with podman on a RHEL host that is already registered, the
+build uses the host's subscription and `demo.conf` is not needed.
+
+## Build the RPMs
+
+    cd ~/build-flightgear-rpms
+    ./build.sh
+
+The script uses podman if it's installed and docker otherwise. Set
+`ENGINE=docker` to choose docker explicitly.
+
+The RPMs will be in the `flightgear-rpms` directory when the build
+finishes. You can discard the `-devel` RPMs as you will no longer need
+those.
 
     rm -f flightgear-rpms/*-devel*
 

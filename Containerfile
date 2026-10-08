@@ -28,16 +28,18 @@ COPY --from=fedora /missing-rpms.tgz /
 # The build needs the full RHEL repos, including codeready-builder. On a
 # subscribed RHEL host podman passes the host subscription into the
 # container. On any other host (Fedora, Ubuntu, etc.) register the
-# container itself using the SCA credentials passed in as a build secret.
-RUN    --mount=type=secret,id=sca \
+# container itself using the username and password that build.sh prompts
+# for and passes in as build secrets.
+RUN    --mount=type=secret,id=sca_user \
+       --mount=type=secret,id=sca_pass \
        if ls /etc/pki/entitlement-host/*.pem >/dev/null 2>&1; \
        then \
            echo "Using the host's RHEL subscription"; \
        else \
-           . /run/secrets/sca \
-           && dnf -y install subscription-manager \
+           dnf -y install subscription-manager \
            && subscription-manager register \
-                  --username "$SCA_USER" --password "$SCA_PASS"; \
+                  --username "$(cat /run/secrets/sca_user)" \
+                  --password "$(cat /run/secrets/sca_pass)"; \
        fi
 
 # update and then set up the build environment

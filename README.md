@@ -19,20 +19,19 @@ On Ubuntu or Debian
 
 Docker works too if you already have it.
 
-## Set your Red Hat credentials
-Clone this repository and edit `demo.conf` to set your Red Hat customer
-portal username and password. These are passed to the build as a secret
-and are not stored in any image layer. A free
-[Red Hat Developer](https://developers.redhat.com/register) account
-works.
-
-If you build with podman on a RHEL host that is already registered, the
-build uses the host's subscription and `demo.conf` is not needed.
-
 ## Build the RPMs
+Clone this repository to your home directory, then run the build.
 
     cd ~/build-flightgear-rpms
     ./build.sh
+
+The script asks for your Red Hat customer portal username and password
+(the password isn't shown as you type). They are passed to the build as
+secrets, so they never end up in an image layer, and the temporary copy
+the script makes is deleted when it exits. A free
+[Red Hat Developer](https://developers.redhat.com/register) account
+works. If you build with podman on a RHEL host that is already
+registered, the build uses the host's subscription and doesn't ask.
 
 The script uses podman if it's installed and docker otherwise. Set
 `ENGINE=docker` to choose docker explicitly.

@@ -2,8 +2,8 @@
 Use a Containerfile with multi-stage builds to sort out all the missing
 dependencies and build the RPMs.
 
-Install RHEL 9.4 minimal. Clone this repository to your physical
-or virtual guest instance of RHEL 9.4. Edit `demo.conf` to set SCA
+Install RHEL 9.8 minimal. Clone this repository to your physical
+or virtual guest instance of RHEL 9.8. Edit `demo.conf` to set SCA
 credentials. Next, register with SCA and pull updates
 
     cd ~/build-flightgear-rpms

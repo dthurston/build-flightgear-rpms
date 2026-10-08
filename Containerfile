@@ -22,7 +22,7 @@ RUN    cat build-dependencies.txt runtime-dependencies.txt | \
 ##
 ## Build the missing FlightGear SRPMs on RHEL9
 ##
-FROM registry.redhat.io/ubi9/ubi:9.4
+FROM registry.redhat.io/ubi9/ubi:9.8
 COPY --from=f34 /missing-rpms.tgz / 
 
 # update and then set up the build environment

@@ -22,8 +22,23 @@ RUN    cat build-dependencies.txt runtime-dependencies.txt | \
 ##
 ## Build the missing FlightGear SRPMs on RHEL9
 ##
-FROM registry.redhat.io/ubi9/ubi:9.8
+FROM registry.access.redhat.com/ubi9/ubi:9.8 AS build
 COPY --from=fedora /missing-rpms.tgz / 
+
+# The build needs the full RHEL repos, including codeready-builder. On a
+# subscribed RHEL host podman passes the host subscription into the
+# container. On any other host (Fedora, Ubuntu, etc.) register the
+# container itself using the SCA credentials passed in as a build secret.
+RUN    --mount=type=secret,id=sca \
+       if ls /etc/pki/entitlement-host/*.pem >/dev/null 2>&1; \
+       then \
+           echo "Using the host's RHEL subscription"; \
+       else \
+           . /run/secrets/sca \
+           && dnf -y install subscription-manager \
+           && subscription-manager register \
+                  --username "$SCA_USER" --password "$SCA_PASS"; \
+       fi
 
 # update and then set up the build environment
 RUN    dnf -y update \
@@ -35,7 +50,7 @@ RUN    dnf -y update \
 RUN    mkdir -p srpms \
     && tar zxvf missing-rpms.tgz -C srpms \
     && ls srpms/*.src.rpm | xargs dnf -y builddep --skip-unavailable --srpm \
-           --enablerepo=codeready-builder-for-rhel-9-x86_64-rpms
+           --enablerepo=codeready-builder-for-rhel-9-$(uname -m)-rpms
 
 # at this point, we need to attempt to build each SRPM and then install
 # the resulting RPMs until they all eventually build. This could probably
@@ -52,8 +67,17 @@ RUN    mkdir -p rpms completed-srpms \
                    mv $i completed-srpms; \
                    cp $(find /root/rpmbuild/RPMS/ -type f -name '*.rpm' | grep -vE 'debugsource|debuginfo') rpms; \
                    dnf -y install \
-                       --enablerepo=codeready-builder-for-rhel-9-x86_64-rpms \
+                       --enablerepo=codeready-builder-for-rhel-9-$(uname -m)-rpms \
                        rpms/*.rpm; \
                fi; \
            done; \
        done
+
+# release the container's registration, if it made one
+RUN    subscription-manager unregister || true
+
+##
+## Export only the built RPMs to the host via --output
+##
+FROM scratch
+COPY --from=build /rpms/ /

@@ -1,29 +1,29 @@
 ##
-## Start with Fedora 34 which should be the closest Fedora release to
-## RHEL 9 and download the Fedora SRPM files for the missing FlightGear
+## Start with Fedora 44, the latest stable Fedora release, and download
+## the Fedora SRPM files for the missing FlightGear
 ## dependencies. These were determined manually to find the minimal set
 ## of build and runtime dependencies.
 ##
 ## Key artifact: missing-rpms.tgz
 ##
-FROM fedora:34 AS f34
+FROM fedora:44 AS fedora
 COPY /*-dependencies.txt /
 
-# update and install xargs and find
+# update and install xargs and find (download is built into dnf5)
 RUN    dnf -y update \
-    && dnf -y install findutils 'dnf-command(download)' \
+    && dnf -y install findutils \
     && dnf -y clean all
 
 # download and tgz the missing dependency SRPM files.
 RUN    cat build-dependencies.txt runtime-dependencies.txt | \
-           xargs dnf -y download --source --archlist x86_64,noarch \
+           xargs dnf -y download --srpm \
     && tar zcvf missing-rpms.tgz *.rpm
 
 ##
 ## Build the missing FlightGear SRPMs on RHEL9
 ##
 FROM registry.redhat.io/ubi9/ubi:9.8
-COPY --from=f34 /missing-rpms.tgz / 
+COPY --from=fedora /missing-rpms.tgz / 
 
 # update and then set up the build environment
 RUN    dnf -y update \
